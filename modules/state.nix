@@ -1,6 +1,6 @@
 { lib, config, pkgs, ... }:
 let
-  inherit (lib) optionalAttrs mkOption types getExe';
+  inherit (lib) optionalAttrs mkOption types getExe' mkIf;
   stateConfig = config.state;
   mkdir = getExe' pkgs.coreutils "mkdir";
 in
@@ -21,7 +21,7 @@ in
     };
   };
 
-  config = optionalAttrs stateConfig.enable {
+  config = mkIf stateConfig.enable {
     devshell.startup = optionalAttrs stateConfig.autoCreate {
       # HACK: This should run before other startup scripts, but there's no way to
       # control the order. I noticed that they're sorted so I'm prefixing it with
