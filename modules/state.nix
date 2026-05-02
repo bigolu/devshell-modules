@@ -9,14 +9,14 @@ in
     enable = mkOption {
       default = true;
       example = true;
-      description = "Whether to enable the management of the project state directory";
+      description = "Whether to enable the management of the project state directory.";
       type = types.bool;
     };
 
     autoCreate = mkOption {
       default = true;
       example = true;
-      description = "Whether to automatically create the state directory";
+      description = "Whether to automatically create the state directory.";
       type = types.bool;
     };
   };

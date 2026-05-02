@@ -7,7 +7,7 @@ in
   options.autocomplete.enable = mkOption {
     default = true;
     example = true;
-    description = "Whether to enable autocomplete in the interactive Bash shell";
+    description = "Whether to enable autocomplete in the interactive Bash shell.";
     type = types.bool;
   };
 
