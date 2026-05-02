@@ -1,2 +1,3 @@
 # devshell-modules
-Modules for devshell: https://github.com/numtide/devshell
+
+Modules for [devshell](https://github.com/numtide/devshell)
