@@ -4,5 +4,6 @@
     autocomplete = ./modules/autocomplete.nix;
     state = ./modules/state.nix;
     secrets = ./modules/secrets.nix;
+    gcRoot = ./modules/gc-root.nix;
   };
 }
