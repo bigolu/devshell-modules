@@ -48,9 +48,9 @@ in
 
     path = mkOption {
       type = types.str;
-      description = "Path for GC root, relative to `$PRJ_ROOT`";
+      description = "Path for GC root, relative to `$PRJ_DATA_DIR`";
       default = "gc-roots/${config.devshell.name}";
-      apply = value: ''"$PRJ_ROOT"/${escapeShellArg value}'';
+      apply = value: ''"$PRJ_DATA_DIR"/${escapeShellArg value}'';
     };
 
     diff = {
