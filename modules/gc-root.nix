@@ -66,20 +66,20 @@ in
       paths = mkOption {
         type = types.listOf types.package;
         description = "A list of store paths to include in the GC root.";
-        default = [];
+        default = [ ];
       };
 
       flake = {
         inputs = mkOption {
           type = types.attrs;
           description = "An attrset of flake inputs to include in the GC root.";
-          default = {};
+          default = { };
         };
 
         exclude = mkOption {
           type = types.listOf types.str;
           description = "The names of the direct inputs to exclude from the GC root. We take strings so we can determine if an input should be excluded just by its name, i.e. the key in the `inputs` set. This way, we can avoid fetching an excluded input and its transitive inputs. This is the reason we only allow direct inputs to be excluded.";
-          default = [];
+          default = [ ];
         };
       };
     };
@@ -104,23 +104,27 @@ in
                   exclude,
                 }:
                 let
-                  removeExcluded = filterAttrs (name: _input: !(elem name exclude));
+                  # We don't want to make a GC root for self
+                  removeExcluded = filterAttrs (name: _input: (name != "self") && (!(elem name exclude)));
                   toClosureNodes = mapAttrsToList (
                     # Used by `genericClosure` for equality checks
                     _name: input: input // { key = input.outPath; }
                   );
                 in
-                # There may be cycles if a user sets `inputs.foo.inputs.bar.follows = ""`
-                # which would point bar to `self`. This is sometimes done to remove
-                # unnecessary inputs like development-only inputs. `genericClosure` will
-                # handle this case.
                 genericClosure {
                   startSet = pipe inputs [
                     removeExcluded
                     toClosureNodes
                   ];
-                  # Non-Flake inputs will not have inputs
-                  operator = input: toClosureNodes (input.inputs or { });
+                  operator =
+                    input:
+                    toClosureNodes (
+                      filterAttrs
+                        # We don't want to make a GC root for self.
+                        (_name: input: input.outPath != inputs.self.outPath)
+                        # Non-Flake inputs will not have inputs.
+                        (input.inputs or { })
+                    );
                 };
             in
             config:
