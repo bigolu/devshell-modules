@@ -161,45 +161,25 @@ in
         # The path to the GC roots file is included here to make it part
         # of the dev shell closure: ${rootsFile}
 
-        if [[ ''${DEVSHELL_GC_ROOT:-} != 'false' ]]; then
-          # If the dev shell was bundled using `nix bundle`, then are things
-          # we can no longer assume:
-          #   - The presence of the `nix-store` binary: The bundle may be
-          #     run on a machine that doesn't have nix installed so we can't
-          #     assume `nix-store` exists.
-          #   - The validity of store paths: The store paths in the bundle
-          #     may not exist in the user's nix store. So before using any
-          #     store path in a `nix-store` command, we have to make sure it
-          #     exists.
-          if type -P nix-store >/dev/null; then
-            has_nix_store=true
-          else
-            has_nix_store=false
-          fi
-          function has_store_paths {
-            nix-store --query --hash "$@" >/dev/null 2>&1
-          }
-
+        # If the nix store doesn't have the devshell, assume `nix bundle` was
+        # used. If `nix bundle` was used, we shouldn't do anything.
+        if nix-store --query --hash "$DEVSHELL_DIR"" >/dev/null 2>&1; then
           if [[ ! -e ${gcRootConfig.path} ]]; then
             ${mkdir} --parents ${gcRootConfig.path}
           fi
 
+          # TODO: `$DEVSHELL_DIR` is not the top-level derivation for
+          # the dev shell. We use this command to find it. Ideally,
+          # devshell would set an environment variable that contains the
+          # path to the top-level derivation.
           shell_store_path=${shellStorePathPrefix}"''${DEVSHELL_DIR//\//-}"
           if [[ -e "$shell_store_path" ]]; then
             new_shell="$(<"$shell_store_path")"
           else
-            if [[ $has_nix_store == 'true' ]] && has_store_paths "$DEVSHELL_DIR"; then
-              # TODO: `$DEVSHELL_DIR` is not the top-level derivation for
-              # the dev shell. We use this command to find it. Ideally,
-              # devshell would set an environment variable that contains the
-              # path to the top-level derivation.
-              new_shell="$(
-                nix-store --query --referrers-closure "$DEVSHELL_DIR" |
-                  ${tail} --lines 1
-              )"
-            else
-              new_shell="$DEVSHELL_DIR"
-            fi
+            new_shell="$(
+              nix-store --query --referrers-closure "$DEVSHELL_DIR" |
+                ${tail} --lines 1
+            )"
 
             # PERF: Cache the shell store path
             #
@@ -220,17 +200,8 @@ in
             # updates the GC root. To ensure the diff is shown in the
             # terminal, we store a separate symlink to the dev shell
             # that's only updated if stdout is connected to a terminal.
-            #
-            # TODO: If direnv only allowed one process to reload a direnv
-            # environment at a time then this wouldn't be needed. This
-            # should probably be done anyway to avoid race conditions so I
-            # should open an issue.
             if [[ ( ! ${shellToDiff} -ef "$new_shell" ) && -t 1 ]]; then
-              if
-                [[ -e ${shellToDiff} ]] &&
-                  [[ $has_nix_store == 'true' ]] &&
-                  has_store_paths ${shellToDiff} "$new_shell"
-              then
+              if [[ -e ${shellToDiff} ]]; then
                 ${dixExe} "$(${realpath} ${shellToDiff})" "$new_shell"
               fi
               ${ln} --force --no-dereference --symbolic "$new_shell" ${shellToDiff}
@@ -238,16 +209,7 @@ in
           ''}
 
           if [[ ! ${shellGcRoot} -ef "$new_shell" ]]; then
-            if [[ $has_nix_store == 'true' ]] && has_store_paths "$new_shell"; then
-              nix-store --add-root ${shellGcRoot} --realise "$new_shell" >/dev/null
-            else
-              # PERF: By doing this, subsequent checks to see if the GC root
-              # is up to date will pass and we won't have to keep calling
-              # the `has_store_paths` function above. We want to avoid
-              # calling that function since it runs `nix-store`
-              # which would be slow.
-              ${ln} --force --no-dereference --symbolic "$new_shell" ${shellGcRoot}
-            fi
+            nix-store --add-root ${shellGcRoot} --realise "$new_shell" >/dev/null
           else
             # `nh`[1] and `nix-sweep`[2] can delete GC roots that haven't been
             # modified in a certain amount of time. To avoid having this
