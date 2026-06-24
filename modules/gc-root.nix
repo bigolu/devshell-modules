@@ -163,7 +163,7 @@ in
 
         # If the nix store doesn't have the devshell, assume `nix bundle` was
         # used. If `nix bundle` was used, we shouldn't do anything.
-        if nix-store --query --hash "$DEVSHELL_DIR"" >/dev/null 2>&1; then
+        if nix-store --query --hash "$DEVSHELL_DIR" >/dev/null 2>&1; then
           if [[ ! -e ${gcRootConfig.path} ]]; then
             ${mkdir} --parents ${gcRootConfig.path}
           fi
