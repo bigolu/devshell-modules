@@ -202,6 +202,9 @@ in
             # that's only updated if stdout is connected to a terminal.
             if [[ ( ! ${shellToDiff} -ef "$new_shell" ) && -t 1 ]]; then
               if [[ -e ${shellToDiff} ]]; then
+                # We use `realpath` so `dix` can print the store path for the
+                # old devshell. This way, if the user wants to reference the old
+                # devshell, they'll still have the path.
                 ${dixExe} "$(${realpath} ${shellToDiff})" "$new_shell"
               fi
               ${ln} --force --no-dereference --symbolic "$new_shell" ${shellToDiff}
