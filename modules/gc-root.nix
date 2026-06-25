@@ -140,7 +140,8 @@ in
         rootsFile = pipe gcRootConfig.roots [
           attrsToList
           (concatMap ({ name, value }: handlers.${name} value))
-          (rootsList: writeText "roots.txt" (concatLines rootsList))
+          concatLines
+          (writeText "roots.txt")
         ];
 
         dixExe = getExe dix;
