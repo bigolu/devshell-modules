@@ -7,6 +7,8 @@
 # - Roots are joined into a single derivation so you'll only have a single GC root
 #   per project. This is reduces noise in the full list of GC roots for your system
 #   (/nix/var/nix/gcroots/auto).
+# - Unlike nix-direnv, our dependencies will come from Nix so we don't have to worry
+#   about what tools are available on the host.
 
 {
   lib,
