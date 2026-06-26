@@ -171,10 +171,9 @@ in
             ${mkdir} --parents ${gcRootConfig.path}
           fi
 
-          # TODO: `$DEVSHELL_DIR` is not the top-level derivation for
-          # the dev shell. We use this command to find it. Ideally,
-          # devshell would set an environment variable that contains the
-          # path to the top-level derivation.
+          # TODO: `$DEVSHELL_DIR` is not the top-level derivation for the dev
+          # shell. Ideally, devshell would set an environment variable that
+          # contains the path to the top-level derivation.
           shell_store_path=${shellStorePathPrefix}"''${DEVSHELL_DIR//\//-}"
           if [[ -e "$shell_store_path" ]]; then
             new_shell="$(<"$shell_store_path")"
